@@ -1,91 +1,58 @@
-import 'package:english_words/english_words.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'Raw Milk Finder',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        ),
-        home: MyHomePage(),
+    return MaterialApp(
+      title: 'Google Maps Sample',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      home: MapSample(),
     );
   }
 }
 
-class MyAppState extends ChangeNotifier {
-  var current = WordPair.random();
+class MapSample extends StatefulWidget {
+  const MapSample({Key? key}) : super(key: key);
 
-  void getNext() {
-    current = WordPair.random();
-    notifyListeners();
-  }
+  @override
+  State<MapSample> createState() => MapSampleState();
 }
 
-class MyHomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var current = appState.current;
+class MapSampleState extends State<MapSample> {
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
 
-    const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
+  static const CameraPosition _oneTreeFarm = CameraPosition(
+    target: LatLng(51.021640, -3.002263),
     zoom: 14.4746,
   );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Raw Milk Finder'),
-      ),
-      body: GoogleMap(
-         mapType: MapType.hybrid,
-        initialCameraPosition: _kGooglePlex,
-        onMapCreated: (GoogleMapController controller) {
-          _controller.complete(controller);
-        },
-    ,)
-    );
-  }
-}
-
-class CenterCard extends StatelessWidget {
-  const CenterCard({
-    super.key,
-    required this.current,
-  });
-
-  final WordPair current;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
-
-    return Card(
-      color: theme.colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Text(
-          current.asLowerCase,
-          style: style,
-          semanticsLabel: "${current.first} ${current.second}",
-        ),
+    return Scaffold(
+      body: GoogleMap(
+        mapType: MapType.normal,
+        initialCameraPosition: _oneTreeFarm,
+        onMapCreated: (GoogleMapController controller) {
+          _controller.complete(controller);
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _goToTheLake,
+        label: const Text('To One Tree Farm'),
       ),
     );
+  }
+
+  Future<void> _goToTheLake() async {
+    final GoogleMapController controller = await _controller.future;
+    await controller.animateCamera(CameraUpdate.newCameraPosition(_oneTreeFarm));
   }
 }
